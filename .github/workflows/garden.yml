@@ -1,0 +1,53 @@
+name: Grow the garden
+
+# Redraws assets/garden.svg every hour: the sky follows the time in the Netherlands,
+# the shiba sleeps in the evening, and the commit garden uses the real contribution calendar.
+on:
+  schedule:
+    - cron: '5 * * * *'
+  workflow_dispatch:
+  push:
+    branches: [main]
+    paths: ['scripts/**', '.github/workflows/garden.yml']
+
+permissions:
+  contents: write
+
+concurrency:
+  group: garden
+  cancel-in-progress: true
+
+jobs:
+  build:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-python@v5
+        with:
+          python-version: '3.12'
+
+      - name: Fetch Pixelify Sans (SIL Open Font License)
+        run: |
+          mkdir -p fonts
+          if [ ! -f fonts/PixelifySans.ttf ]; then
+            curl -fsSL -o fonts/PixelifySans.ttf \
+              "https://github.com/google/fonts/raw/main/ofl/pixelifysans/PixelifySans%5Bwght%5D.ttf"
+          fi
+
+      - name: Build garden.svg
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        run: python scripts/build_readme.py
+
+      - name: Commit
+        run: |
+          git config user.name "github-actions[bot]"
+          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+          git add assets/garden.svg fonts/PixelifySans.ttf
+          if git diff --cached --quiet; then
+            echo "nothing changed"
+          else
+            git commit -m "grow the garden"
+            git push
+          fi
