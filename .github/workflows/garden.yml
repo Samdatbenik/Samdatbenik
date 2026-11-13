@@ -37,7 +37,7 @@ jobs:
 
       - name: Build garden.svg
         env:
-          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+          GITHUB_TOKEN: ${{ secrets.GARDEN_TOKEN || secrets.GITHUB_TOKEN }}
         run: python scripts/build_readme.py
 
       - name: Commit
